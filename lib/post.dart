@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'models/post_model.dart';
-import 'services/post_service.dart';
+import 'package:provider/provider.dart';
+import '../provider/post_provider.dart';
 
 class PostPage extends StatefulWidget {
   @override
@@ -8,17 +8,20 @@ class PostPage extends StatefulWidget {
 }
 
 class _PostPageState extends State<PostPage> {
-  late Future<List<PostModel>> futurePosts;
 
   @override
-  void initState() {
-    super.initState();
-    futurePosts = PostService.getPosts();
-  }
+void initState() {
+  super.initState();
+  Future.microtask(() {
+    context.read<PostProvider>().fetchPost();
+  });
+}
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+
+  final provider = context.watch<PostProvider>();
+  return Scaffold(
       appBar: AppBar(
         title: Text(
           "Daftar Postingan",
@@ -30,14 +33,21 @@ class _PostPageState extends State<PostPage> {
         ),
         backgroundColor: Colors.lightBlue,
       ),
-      body: FutureBuilder<List<PostModel>>(
-        future: futurePosts,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final posts = snapshot.data!;
-            return ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
+body: Builder(
+        builder: (context) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (provider.errorMessage.isNotEmpty) {
+            return Center(child: Text(provider.errorMessage));
+          }
+          
+          final posts = provider.posts;
+          
+          return ListView.builder(
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
                 final post = posts[index];
                 return Card(
                   margin: const EdgeInsets.all(10),
@@ -49,13 +59,8 @@ class _PostPageState extends State<PostPage> {
                 );
               },
             );
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
+          },
+        ),
       floatingActionButton: Row(
         mainAxisAlignment: .spaceAround,
         children: [
