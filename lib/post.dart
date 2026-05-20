@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../provider/post_provider.dart';
 
 class PostPage extends StatefulWidget {
+  const PostPage({Key? key}) : super(key: key);
+
   @override
   State<PostPage> createState() => _PostPageState();
 }
@@ -10,12 +12,12 @@ class PostPage extends StatefulWidget {
 class _PostPageState extends State<PostPage> {
 
   @override
-void initState() {
-  super.initState();
-  Future.microtask(() {
-    context.read<PostProvider>().fetchPost();
-  });
-}
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PostProvider>().fetchPost();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ void initState() {
         ),
         backgroundColor: Colors.lightBlue,
       ),
-body: Builder(
+        body: Builder(
         builder: (context) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());

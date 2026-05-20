@@ -3,6 +3,7 @@ import 'post.dart';
 import 'photos.dart';
 import 'package:provider/provider.dart';
 import 'provider/post_provider.dart';
+import 'provider/photo_provider.dart';
 
 void main() {
   runApp(
@@ -10,7 +11,10 @@ void main() {
       providers: [
         ChangeNotifierProvider(
           create: (_) => PostProvider(),
-        ), 
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PhotoProvider(),
+        ),
       ],
       child: const MyApp(),
     ),

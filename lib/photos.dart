@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
-import 'models/photo_model.dart';
-import 'services/photo_service.dart';
+import 'package:provider/provider.dart';
+import 'provider/photo_provider.dart';
 
 class PhotoPage extends StatefulWidget {
+  const PhotoPage({Key? key}) : super(key: key);
+
   @override
   State<PhotoPage> createState() => _PhotoPageState();
 }
 
 class _PhotoPageState extends State<PhotoPage> {
-  late Future<List<PhotoModel>> futurePhotos;
-
   @override
   void initState() {
     super.initState();
-    futurePhotos = PhotoService.getPhotos();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PhotoProvider>().fetchPhotos();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<PhotoProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -31,30 +35,31 @@ class _PhotoPageState extends State<PhotoPage> {
         backgroundColor: Colors.lightBlue,
         automaticallyImplyLeading: false,
       ),
-      body: FutureBuilder<List<PhotoModel>>(
-        future: futurePhotos,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final photos = snapshot.data!;
-            return ListView.builder(
-              itemCount: photos.length,
-              itemBuilder: (context, index) {
-                final photo = photos[index];
-                return Card(
-                  margin: const EdgeInsets.all(10),
-                  child: ListTile(
-                    title: Text(photo.author),
-                    subtitle: Image.network(photo.url),
-                    // leading: CircleAvatar(child: Text(photo.id.toString())),
-                  ),
-                );
-              },
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return Center(child: CircularProgressIndicator());
+      body: Builder(
+        builder: (context) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
           }
+
+          if (provider.errorMessage.isNotEmpty) {
+            return Center(child: Text(provider.errorMessage));
+          }
+
+          final photos = provider.photos;
+          return ListView.builder(
+            itemCount: photos.length,
+            itemBuilder: (context, index) {
+              final photo = photos[index];
+              return Card(
+                margin: const EdgeInsets.all(10),
+                child: ListTile(
+                  title: Text(photo.author),
+                  subtitle: Image.network(photo.url),
+                  // leading: CircleAvatar(child: Text(photo.id.toString())),
+                ),
+              );
+            },
+          );
         },
       ),
       floatingActionButton: Row(
